@@ -105,6 +105,42 @@ def ConvertTorchToLinalg : Pass<"convert-torch-to-linalg", "func::FuncOp"> {
   let constructor = "mlir::torch::createConvertTorchToLinalgPass()";
 }
 
+
+
+// ====----------------------------------
+// @MYDIALECT: Isolate Torch Operations Pass
+// ====----------------------------------
+
+
+def IsolateTorchOps : Pass<"isolate-torch-ops"> {
+  let summary = "Isolate each torch.named_op into a separate MLIR file for inspection";
+  let description = [{
+    This pass isolates select Torch Operations in the MLIR file. 
+  }];
+  let constructor = "mlir::createIsolateTorchOps()";
+  let dependentDialects = [];
+ 
+}
+
+
+
+// ====----------------------------------
+// @MYDIALECT: Generate Module Parameter Metadata Pass
+// ====----------------------------------
+
+
+def GenParamMetadata : Pass<"generate-param-metadata"> {
+  let summary = "Generate Metadata about parameters needed in functions";
+  let description = [{
+    This pass generates a csv file containing information 
+    (shape, type, etc) about parameters of functions in the input module
+  }];
+  let constructor = "mlir::createGenParamMetadataPass()";
+  let dependentDialects = [];
+ 
+}
+
+
 def ConvertTorchToTensor : Pass<"convert-torch-to-tensor", "func::FuncOp"> {
   let summary = "Convert Torch ops to the Tensor dialect";
   let description = [{

@@ -20,6 +20,9 @@
 #include "torch-mlir/Conversion/TorchToTMTensor/TorchToTMTensor.h"
 #include "torch-mlir/Conversion/TorchToTensor/TorchToTensor.h"
 
+#include "torch-mlir/Conversion/GenParamMetadata/GenParamMetadata.h"
+#include "torch-mlir/Conversion/IsolateTorchOps/IsolateTorchOps.h"
+
 #ifdef TORCH_MLIR_ENABLE_TOSA
 #include "torch-mlir/Conversion/TorchToTosa/TorchToTosa.h"
 #endif // TORCH_MLIR_ENABLE_TOSA

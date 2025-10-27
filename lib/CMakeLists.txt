@@ -5,31 +5,28 @@ add_subdirectory(Conversion)
 add_subdirectory(Dialect)
 
 set(LinkedLibs
-  MLIRComplexDialect
-  MLIRFuncDialect
-  MLIRFuncInlinerExtension
-  MLIRIR
-  MLIRMLProgramDialect
-  MLIRMemRefDialect
-  MLIRSCFDialect
-  MLIRTensorDialect
-  MLIRTensorInferTypeOpInterfaceImpl
-  MLIRSupport
-
-  # Dialects.
-  TorchMLIRTMTensorDialect
-  TorchMLIRTorchDialect
-  TorchMLIRTorchConversionDialect
-
-  # Dialect passes.
-  TorchMLIRTMTensorPasses
-  TorchMLIRTorchConversionPasses
-  TorchMLIRTorchPasses
-
-  # Conversion passes.
-  TorchMLIRConversionPasses
-  TorchMLIRTorchOnnxToTorch
-)
+    MLIRComplexDialect
+    MLIRFuncDialect
+    MLIRFuncInlinerExtension
+    MLIRIR
+    MLIRMLProgramDialect
+    MLIRMemRefDialect
+    MLIRSCFDialect
+    MLIRTensorDialect
+    MLIRTensorInferTypeOpInterfaceImpl
+    MLIRSupport
+    # Dialects.
+    TorchMLIRTMTensorDialect
+    TorchMLIRTorchDialect
+    TorchMLIRTorchConversionDialect
+    # Dialect passes.
+    TorchMLIRTMTensorPasses
+    TorchMLIRTorchConversionPasses
+    TorchMLIRTorchPasses
+    # Conversion passes.
+    TorchMLIRConversionPasses
+    TorchMLIRTorchOnnxToTorch
+    TorchMLIRIsolateTorchOps)
 
 if(TORCH_MLIR_ENABLE_STABLEHLO)
   list(APPEND LinkedLibs StablehloLinalgTransforms StablehloPasses)
@@ -44,11 +41,6 @@ if(TORCH_MLIR_ENABLE_REFBACKEND)
   list(APPEND LinkedLibs TorchMLIRRefBackend)
 endif()
 
-add_mlir_library(TorchMLIRInitAll
-  InitAll.cpp
-
-  LINK_LIBS PUBLIC
-  ${LinkedLibs}
-)
+add_mlir_library(TorchMLIRInitAll InitAll.cpp LINK_LIBS PUBLIC ${LinkedLibs})
 
 torch_mlir_target_includes(TorchMLIRInitAll)

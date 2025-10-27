@@ -12,15 +12,20 @@ endif()
 add_subdirectory(TorchToTMTensor)
 add_subdirectory(TorchConversionToMLProgram)
 add_subdirectory(Utils)
+add_subdirectory(IsolateTorchOps)
+add_subdirectory(GenParamMetadata)
 
 # TODO: Automate this with add_torch_mlir_conversion_library.
-set(linked_libs TorchMLIRTorchToArith
-                TorchMLIRTorchToLinalg
-                TorchMLIRTorchToSCF
-                TorchMLIRTorchToTensor
-                TorchMLIRTorchToTMTensor
-                TorchMLIRTorchConversionToMLProgram
-                TorchMLIRConversionUtils)
+set(linked_libs
+    TorchMLIRTorchToArith
+    TorchMLIRTorchToLinalg
+    TorchMLIRTorchToSCF
+    TorchMLIRTorchToTensor
+    TorchMLIRTorchToTMTensor
+    TorchMLIRTorchConversionToMLProgram
+    TorchMLIRConversionUtils
+    TorchMLIRIsolateTorchOps
+    TorchMLIRGenParamMetadata)
 if(TORCH_MLIR_ENABLE_STABLEHLO)
   list(APPEND linked_libs TorchMLIRTorchToStablehlo)
 endif()
@@ -28,12 +33,11 @@ if(TORCH_MLIR_ENABLE_TOSA)
   list(APPEND linked_libs TorchMLIRTorchToTosa)
 endif()
 
-add_mlir_library(TorchMLIRConversionPasses
+add_mlir_library(
+  TorchMLIRConversionPasses
   Passes.cpp
-
   DEPENDS
   TorchMLIRConversionPassIncGen
-
-  LINK_LIBS PUBLIC
-  ${linked_libs}
-)
+  LINK_LIBS
+  PUBLIC
+  ${linked_libs})

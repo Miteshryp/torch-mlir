@@ -15,10 +15,17 @@ project_dir="$(cd "$(dirname "$0")"/.. && pwd)"
 llvm_project_dir="$project_dir/externals/llvm-project"
 build_dir="$project_dir/build"
 
+nanobind_include="$CONDA_PREFIX/lib/python3.11/site-packages/nanobind/include"
+python_include="$CONDA_PREFIX/include/python3.11"
+robinmap_include="/opt/homebrew/Cellar/robin-map/1.4.0/include"
+
 cmake -GNinja -B"$build_dir" "$llvm_project_dir/llvm" \
   -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+  -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+  -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+  -DCMAKE_CXX_STANDARD=20 \
   -DLLVM_ENABLE_PROJECTS=mlir \
+  -DCMAKE_CXX_FLAGS="-I$nanobind_include -I$python_include -I$robinmap_include" \
   -DLLVM_EXTERNAL_PROJECTS="torch-mlir" \
   -DLLVM_EXTERNAL_TORCH_MLIR_SOURCE_DIR="$project_dir" \
   -DMLIR_ENABLE_BINDINGS_PYTHON=ON \
@@ -26,4 +33,5 @@ cmake -GNinja -B"$build_dir" "$llvm_project_dir/llvm" \
   -DLLVM_TARGETS_TO_BUILD=host
 
 cd "$build_dir"
-ninja tools/torch-mlir/all check-torch-mlir-all
+# ninja tools/torch-mlir/all check-torch-mlir-all
+ninja -C .
