@@ -11,6 +11,7 @@ externals/pytorch/
 libtorch*
 
 /build/
+old-build
 .build-cache/
 /setup_build/
 __pycache__

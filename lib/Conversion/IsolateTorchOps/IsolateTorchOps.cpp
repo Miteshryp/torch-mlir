@@ -9,6 +9,7 @@
 
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
+#include "mlir/IR/Diagnostics.h"
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/IR/Operation.h"
 #include "mlir/Support/LLVM.h"
@@ -29,6 +30,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/TypeSwitch.h"
 #include "llvm/Support/raw_ostream.h"
+#include <filesystem>
 
 #include "torch-mlir/Conversion/IsolateTorchOps/GenericIsolator.h"
 #include "torch-mlir/Conversion/IsolateTorchOps/IsolateTorchOps.h"
@@ -46,6 +48,15 @@ struct IsolateTorchOps
     : public PassWrapper<IsolateTorchOps, OperationPass<ModuleOp>> {
   MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(IsolateTorchOps)
 
+  Option<std::string> outputFolderPath{
+      *this, "output-path",
+      llvm::cl::desc("Path of output director to write isolated kernels into"),
+      llvm::cl::init("./lowerings")};
+
+  IsolateTorchOps() = default;
+  IsolateTorchOps(const IsolateTorchOps &pass) {}
+  IsolateTorchOps(IsolateTorchOps &&pass) {}
+
   StringRef getArgument() const final { return "isolate-torch-ops"; }
 
   StringRef getDescription() const final {
@@ -57,7 +68,14 @@ struct IsolateTorchOps
     ModuleOp module = getOperation();
     MLIRContext *ctx = &getContext();
 
-    llvm::outs() << "This is running?\n";
+    if (outputFolderPath.getValue().empty()) {
+      llvm::errs() << "Output Folder not passed: Exiting Isolation Pass\n";
+      exit(2);
+    }
+
+    fs::path output_folder(outputFolderPath.getValue());
+
+    // llvm::outs() << "This is running?\n";
     // index for naming files
     unsigned idx = 0;
 
@@ -66,45 +84,59 @@ struct IsolateTorchOps
     module.walk([&](mlir::Operation *op) {
       llvm::TypeSwitch<Operation *, void>(op)
           .Case<torch::Torch::AtenConv2dOp>([&](Torch::AtenConv2dOp constOp) {
-            GenericIsolator::applyIsolation(module, ctx, op, idx++,
-                                            "conv/outlined_conv2d_");
+            GenericIsolator::applyIsolation(
+                module, ctx, op, idx++, output_folder, "conv/outlined_conv2d_");
           })
           .Case<torch::Torch::AtenConv3dOp>([&](Torch::AtenConv3dOp constOp) {
-            GenericIsolator::applyIsolation(module, ctx, op, idx++,
-                                            "conv/outlined_conv3d_");
+            GenericIsolator::applyIsolation(
+                module, ctx, op, idx++, output_folder, "conv/outlined_conv3d_");
           })
           .Case<torch::Torch::AtenConvolutionOp>(
               [&](Torch::AtenConvolutionOp constOp) {
                 GenericIsolator::applyIsolation(module, ctx, op, idx++,
+                                                output_folder,
+
                                                 "conv/outlined_conv_");
               })
           .Case<torch::Torch::AtenMatmulOp>([&](auto constOp) {
             GenericIsolator::applyIsolation(module, ctx, op, idx++,
+                                            output_folder,
+
                                             "matmul/outlined_matmul_");
             llvm::outs() << "Matmul Operation: Pushed\n";
           })
           .Case<torch::Torch::AtenMmOp>([&](auto mmOp) {
             GenericIsolator::applyIsolation(module, ctx, op, idx++,
+                                            output_folder,
+
                                             "matmul/outlined_mm_");
             llvm::outs() << "MM Operation: Pushed\n";
           })
           .Case<torch::Torch::AtenSqueezeOp>([&](auto constOp) {
             GenericIsolator::applyIsolation(module, ctx, op, idx++,
+                                            output_folder,
+
                                             "squeeze/outlined_squeeze_");
             llvm::outs() << "Squeeze Operation: Pushed\n";
           })
           .Case<torch::Torch::AtenSqueezeDimOp>([&](auto constOp) {
             GenericIsolator::applyIsolation(module, ctx, op, idx++,
+                                            output_folder,
+
                                             "squeeze/outlined_dim_squeeze_");
             llvm::outs() << "Dim Squeeze Operation: Pushed\n";
           })
           .Case<torch::Torch::AtenLinearOp>([&](auto linearOp) {
             GenericIsolator::applyIsolation(module, ctx, op, idx++,
+                                            output_folder,
+
                                             "linear/outlined_linear_");
             llvm::outs() << "Linear Operation: Pushed\n";
           })
           .Case<torch::Torch::AtenAvgPool2dOp>([&](auto constOp) {
             GenericIsolator::applyIsolation(module, ctx, op, idx++,
+                                            output_folder,
+
                                             "pooling/outlined_avg_2d_pool_");
             llvm::outs() << "Average 2D Pool Operation: Pushed\n";
           })

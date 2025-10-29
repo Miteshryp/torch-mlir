@@ -78,13 +78,13 @@ struct GenParamMetadata
 
   GenParamMetadata() = default;
   GenParamMetadata(const GenParamMetadata &pass) {
-    this->options.copyOptionValuesFrom(pass.options);
+    // this->options.copyOptionValuesFrom(pass.options);
   }
   GenParamMetadata(GenParamMetadata &&pass) {
-    this->options.copyOptionValuesFrom(pass.options);
+    // this->options.copyOptionValuesFrom(pass.options);
   }
 
-  GenParamMetadataPassOptions options;
+  // GenParamMetadataPassOptions options;
 
   StringRef getArgument() const final { return "generate-param-metadata"; }
 
@@ -170,7 +170,7 @@ struct GenParamMetadata
         Type ty = arg.getType();
 
         // Default entry values
-        int64_t rank = -1;
+        // int64_t rank = -1;
         SmallVector<int64_t> staticShape;
         std::string elemTypeStr = "unknown";
 
@@ -251,7 +251,7 @@ struct GenParamMetadata
       // Add to module-level JSON under function name
       std::string fname = func.getName().str();
 
-      llvm::outs() << "Fine till here?\n";
+      // llvm::outs() << "Fine till here?\n";
 
       // rootJson[fname] = std::move(funcJsonArray);
       llvm::json::Object funcJson;
@@ -264,7 +264,7 @@ struct GenParamMetadata
       }
       funcJson["returns"] = std::move(returnArgumentArray);
 
-      llvm::outs() << "IS this even working??\n";
+      // llvm::outs() << "IS this even working??\n";
 
       rootJson[fname] = std::move(funcJson);
     }

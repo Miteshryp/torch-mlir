@@ -49,7 +49,8 @@ namespace mlir {
 class GenericIsolator {
 public:
   static void applyIsolation(ModuleOp &module, MLIRContext *ctx, Operation *gop,
-                             int idx, const std::string &file_prefix) {
+                             int idx, const fs::path &outputFolderPath,
+                             const std::string &file_prefix) {
     SymbolTable symbolTable(module);
     OpBuilder builder(ctx);
     ModuleOp fileModule = ModuleOp::create(builder.getUnknownLoc());
@@ -138,10 +139,10 @@ public:
     // llvm::outs() << "Static definitions to clone: \n";
     for (Operation *op : pendingStaticOps) {
       llvm::outs() << "  Op: " << op->getName() << " (" << op << ")\n";
-      for (Value res : op->getResults()) {
-        // llvm::outs() << "    Result: " << res << " uses=" <<
-        // res.getUses().size() << "\n";
-      }
+      // for (Value res : op->getResults()) {
+      // llvm::outs() << "    Result: " << res << " uses=" <<
+      // res.getUses().size() << "\n";
+      // }
     }
     while (!pendingStaticOps.empty()) {
       bool progress = false;
@@ -230,8 +231,20 @@ public:
     fileModule.push_back(outlinedFunc);
 
     // Print the module to a file
+    // fs::path output_filepath =
+    //     fs::path(fs::current_path().append("lowerings"))
+    //         .append((file_prefix + Twine(idx) + ".mlir").str());
+
+    // std::string filename =
+    //     "lowerings/" + (file_prefix + Twine(idx) + ".mlir").str();
+
     std::string filename =
-        "lowerings/" + (file_prefix + Twine(idx) + ".mlir").str();
+        fs::path(outputFolderPath)
+            .append((file_prefix + Twine(idx) + ".mlir").str())
+            .generic_string();
+
+    llvm::errs() << "Output Filename:  " << filename << '\n';
+
     fs::path filepath = fs::current_path().append(filename);
     fs::path dir_path = filepath.parent_path();
 
