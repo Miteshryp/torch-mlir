@@ -17,7 +17,21 @@ build_dir="$project_dir/build"
 
 nanobind_include="$CONDA_PREFIX/lib/python3.11/site-packages/nanobind/include"
 python_include="$CONDA_PREFIX/include/python3.11"
-robinmap_include="/opt/homebrew/Cellar/robin-map/1.4.0/include"
+
+
+if [[ "$(uname)" == "Darwin" ]]; then
+  # This block runs on macOS
+  robinmap_include="/opt/homebrew/Cellar/robin-map/1.4.0/include"
+elif [[ "$(uname)" == "Linux" ]]; then
+  # This block runs on Linux
+  robinmap_include="/usr/include/tsl"
+else
+  # This is the default or fallback block
+  robinmap_include=""
+fi
+
+
+
 
 cmake -GNinja -B"$build_dir" "$llvm_project_dir/llvm" \
   -DCMAKE_BUILD_TYPE=Release \
