@@ -31,8 +31,6 @@ else
 fi
 
 
-
-
 cmake -GNinja -B"$build_dir" "$llvm_project_dir/llvm" \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_C_COMPILER_LAUNCHER=ccache \
