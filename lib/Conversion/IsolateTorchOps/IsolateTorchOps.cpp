@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/Diagnostics.h"
@@ -83,6 +84,11 @@ struct IsolateTorchOps
 
     module.walk([&](mlir::Operation *op) {
       llvm::TypeSwitch<Operation *, void>(op)
+          .Case<mlir::linalg::GenericOp>([&](mlir::linalg::GenericOp) {
+            GenericIsolator::applyIsolation(module, ctx, op, idx++,
+                                            output_folder,
+                                            "linalg/outlined_linalg_");
+          })
           .Case<torch::Torch::AtenConv2dOp>([&](Torch::AtenConv2dOp constOp) {
             GenericIsolator::applyIsolation(
                 module, ctx, op, idx++, output_folder, "conv/outlined_conv2d_");
