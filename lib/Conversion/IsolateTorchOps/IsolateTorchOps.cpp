@@ -89,6 +89,10 @@ struct IsolateTorchOps
                                             output_folder,
                                             "linalg/outlined_linalg_");
           })
+          .Case<torch::Torch::AtenReluOp>([&](torch::Torch::AtenReluOp) {
+            GenericIsolator::applyIsolation(
+                module, ctx, op, idx++, output_folder, "relu/outlined_relu_");
+          })
           .Case<torch::Torch::AtenConv2dOp>([&](Torch::AtenConv2dOp constOp) {
             GenericIsolator::applyIsolation(
                 module, ctx, op, idx++, output_folder, "conv/outlined_conv2d_");
@@ -118,6 +122,12 @@ struct IsolateTorchOps
                                             "matmul/outlined_mm_");
             llvm::outs() << "MM Operation: Pushed\n";
           })
+          .Case<torch::Torch::AtenTransposeIntOp>(
+              [&](torch::Torch::AtenTransposeIntOp) {
+                GenericIsolator::applyIsolation(
+                    module, ctx, op, idx++, output_folder,
+                    "transpose/outlined_transpose_");
+              })
           .Case<torch::Torch::AtenSqueezeOp>([&](auto constOp) {
             GenericIsolator::applyIsolation(module, ctx, op, idx++,
                                             output_folder,

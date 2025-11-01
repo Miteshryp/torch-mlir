@@ -1,5 +1,7 @@
 #include "mlir/Analysis/SliceAnalysis.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/IR/Builders.h"
+#include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/DialectResourceBlobManager.h"
 #include "mlir/IR/IRMapping.h"
@@ -51,7 +53,7 @@ public:
   static void applyIsolation(ModuleOp &module, MLIRContext *ctx, Operation *gop,
                              int idx, const fs::path &outputFolderPath,
                              const std::string &file_prefix) {
-    SymbolTable symbolTable(module);
+    // SymbolTable symbolTable(module);
     OpBuilder builder(ctx);
     ModuleOp fileModule = ModuleOp::create(builder.getUnknownLoc());
 
@@ -59,6 +61,9 @@ public:
     llvm::SetVector<Value> externalOperands;
 
     // Collect SSA Arguments to the operation
+    // Extracting the type of all arguments needed in the operator
+    // (Including Dyamic operands + SSA arguments needed in the region
+    // of operation)
     externalOperands.insert(gop->getOperands().begin(),
                             gop->getOperands().end());
 
@@ -68,16 +73,17 @@ public:
       getUsedValuesDefinedAbove(region, externalOperands);
     }
 
-    // Extracting the type of all arguments needed in the linalg.generic op
-    // (This includes the Dyamic operands + SSA arguments needed in the region
-    // of operation)
+    // Segregating collected operand into categories for seperate handling logic
+    // argOperands -> Comes from the user
+    // staticDefinitions -> SSA values statically declared in the input program
+    // requiredResourceDefinitions -> Defined in the dialect resources. Need to
+    // be added in outlined kernel
     SmallVector<Value> argOperands;
     llvm::DenseSet<Operation *> staticDefinitions;
     llvm::SmallSet<StringRef, 4> requiredResourceDefinitions;
 
     // Parsing all selected external operands to see which one of them are
-    // static, which are resource dependent and which ones are dynamic
-    //
+    // static, resource dependent or dynamic
     // This will reduce the number of arguments needed from wrapper code to a
     // bare minimum
     for (Value val : externalOperands) {
@@ -101,21 +107,25 @@ public:
       }
     }
 
+    // Extracting type of user input operands for function signature creation
     SmallVector<Type> argTypes;
     for (Value &op : argOperands) {
       argTypes.push_back(op.getType());
     }
 
     // Extracting return type information from operation
-    auto resTypes = gop->getResultTypes();
+    ValueTypeRange<ResultRange> resTypes = gop->getResultTypes();
 
     // Create function signature with valid input and return types
-    auto funcType = builder.getFunctionType(argTypes, resTypes);
-    auto outlinedFunc = func::FuncOp::create(
+    mlir::FunctionType funcType = builder.getFunctionType(argTypes, resTypes);
+    func::FuncOp outlinedFunc = func::FuncOp::create(
         builder.getUnknownLoc(),
-        // (Twine("extracted_generic_") + Twine(idx)).str(),
+        // The method name is the same in all outlined kernels for easier
+        // integration with the benchmarking tool
         "kernel_call", funcType);
-    auto &entryBlock = *outlinedFunc.addEntryBlock();
+
+    // Create code block in the outlined kernel
+    mlir::Block &entryBlock = *outlinedFunc.addEntryBlock();
 
     // Mapping extracted signatures to SSAs in the module
     IRMapping mapping;
